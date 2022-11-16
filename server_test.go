@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -14,12 +15,22 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(w, r.URL.Query().Get("v"))
 	})
 
-	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/post-form", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			fmt.Fprintf(w, "ParseForm() err: %v", err)
 			return
 		}
+
 		fmt.Fprintf(w, r.FormValue("v"))
+	})
+
+	mux.HandleFunc("/post-body", func(w http.ResponseWriter, r *http.Request) {
+		v, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fmt.Fprintf(w, "RequestBody err: %v", err)
+			return
+		}
+		fmt.Fprintf(w, string(v))
 	})
 
 	mux.HandleFunc("/header", func(w http.ResponseWriter, r *http.Request) {

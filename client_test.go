@@ -47,10 +47,18 @@ func TestClient(t *testing.T) {
 	header := http.Header{}
 	header.Set("h", "testget123456")
 
-	if s, resp, err := DefaultClient.PostWithHeaders(httpUrl, data, header).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
-	if s, resp, err := DefaultClient.PostWithHeaders(httpUrl, data, header).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
+		t.Fatal(s, resp, err)
+	}
+
+	httpUrl = fmt.Sprintf("http://127.0.0.1:%d/post-form", testPort)
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+		t.Fatal(s, resp, err)
+	}
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 
@@ -58,12 +66,21 @@ func TestClient(t *testing.T) {
 	header.Set("h", string(b))
 
 	jsonObjOut3 := &TestJson{}
-	if s, resp, err := DefaultClient.PostWithHeaders(httpUrl, data, header).JsonOBJ(jsonObjOut3); err != nil || resp.StatusCode != http.StatusOK {
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).JsonOBJ(jsonObjOut3); err != nil || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	} else {
 		if jsonObjOut3.Name != "testJson" || jsonObjOut3.Age != 18 {
 			t.Fatal(*jsonObjOut3)
 		}
+	}
+
+	if s, resp, err := DefaultClient.PostForm(httpUrl, header, nil).String(); err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatal(s, resp, err)
+	}
+
+	httpUrl = fmt.Sprintf("http://127.0.0.1:%d/post-body", testPort)
+	if s, resp, err := DefaultClient.Post(httpUrl, header, "testget123456").String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+		t.Fatal(s, resp, err)
 	}
 }
 
@@ -72,4 +89,5 @@ func Benchmark_ClientGet(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		DefaultClient.Get(httpUrl).String()
 	}
+
 }

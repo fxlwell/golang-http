@@ -141,15 +141,19 @@ func (c *Client) Get(url string) *ClientRespone {
 	return c.doing(http.MethodGet, url, nil, nil)
 }
 
-func (c *Client) Post(url string, data url.Values) *ClientRespone {
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/x-www-form-urlencoded")
-	return c.doing(http.MethodPost, url, headers, strings.NewReader(data.Encode()))
-}
-
-func (c *Client) PostWithHeaders(url string, data url.Values, headers http.Header) *ClientRespone {
+func (c *Client) Post(url string, headers http.Header, data string) *ClientRespone {
+	if headers == nil {
+		headers = http.Header{}
+	}
 	if len(headers.Get("Content-Type")) <= 0 {
 		headers.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
-	return c.doing(http.MethodPost, url, headers, strings.NewReader(data.Encode()))
+	return c.doing(http.MethodPost, url, headers, strings.NewReader(data))
+}
+
+func (c *Client) PostForm(httpUrl string, headers http.Header, data url.Values) *ClientRespone {
+	if data == nil {
+		data = url.Values{}
+	}
+	return c.Post(httpUrl, headers, data.Encode())
 }
