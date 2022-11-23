@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -15,10 +16,10 @@ type TestJson struct {
 
 func TestClient(t *testing.T) {
 	httpUrl := fmt.Sprintf("http://127.0.0.1:%d/get?v=testget123456", testPort)
-	if s, resp, err := DefaultClient.Get(httpUrl).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := Get(httpUrl).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
-	if s, resp, err := DefaultClient.Get(httpUrl).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := Get(httpUrl).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 
@@ -30,7 +31,7 @@ func TestClient(t *testing.T) {
 
 	httpUrl = fmt.Sprintf("http://127.0.0.1:%d/get?v=%s", testPort, string(b))
 	jsonObjOut := &TestJson{}
-	if s, resp, err := DefaultClient.Get(httpUrl).JsonOBJ(jsonObjOut); err != nil || resp.StatusCode != http.StatusOK {
+	if s, resp, err := Get(httpUrl).JsonOBJ(jsonObjOut); err != nil || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	} else {
 		if jsonObjOut.Name != "testJson" || jsonObjOut.Age != 18 {
@@ -47,18 +48,18 @@ func TestClient(t *testing.T) {
 	header := http.Header{}
 	header.Set("h", "testget123456")
 
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 
 	httpUrl = fmt.Sprintf("http://127.0.0.1:%d/post-form", testPort)
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, data).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, data).Bytes(); err != nil || string(s) != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 
@@ -66,7 +67,7 @@ func TestClient(t *testing.T) {
 	header.Set("h", string(b))
 
 	jsonObjOut3 := &TestJson{}
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, data).JsonOBJ(jsonObjOut3); err != nil || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, data).JsonOBJ(jsonObjOut3); err != nil || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	} else {
 		if jsonObjOut3.Name != "testJson" || jsonObjOut3.Age != 18 {
@@ -74,12 +75,12 @@ func TestClient(t *testing.T) {
 		}
 	}
 
-	if s, resp, err := DefaultClient.PostForm(httpUrl, header, nil).String(); err != nil || resp.StatusCode != http.StatusOK {
+	if s, resp, err := PostForm(httpUrl, header, nil).String(); err != nil || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 
 	httpUrl = fmt.Sprintf("http://127.0.0.1:%d/post-body", testPort)
-	if s, resp, err := DefaultClient.Post(httpUrl, header, "testget123456").String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
+	if s, resp, err := Post(httpUrl, "application/x-www-form-urlencoded", header, strings.NewReader("testget123456")).String(); err != nil || s != "testget123456" || resp.StatusCode != http.StatusOK {
 		t.Fatal(s, resp, err)
 	}
 }
@@ -87,7 +88,21 @@ func TestClient(t *testing.T) {
 func Benchmark_ClientGet(b *testing.B) {
 	httpUrl := fmt.Sprintf("http://127.0.0.1:%d/get?v=testget123456", testPort)
 	for n := 0; n < b.N; n++ {
-		DefaultClient.Get(httpUrl).String()
+		Get(httpUrl).String()
 	}
 
+}
+
+func TestPostJson(t *testing.T) {
+	tjreq := &TestJson{"t", 18}
+	tjres := &TestJson{}
+
+	httpUrl := fmt.Sprintf("http://127.0.0.1:%d/post-body", testPort)
+	res, resp, err := PostJsonOBJ(httpUrl, nil, tjreq).JsonOBJ(tjres)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatal(res, resp, err)
+	}
+	if tjres.Name != "t" || tjres.Age != 18 {
+		t.Fatal(res, resp, err, *tjres)
+	}
 }

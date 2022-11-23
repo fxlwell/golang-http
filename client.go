@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -137,23 +138,61 @@ func (c *Client) doing(method, url string, headers http.Header, body io.Reader) 
 	return &ClientRespone{b, resp, nil}
 }
 
+func Get(url string) *ClientRespone {
+	return DefaultClient.Get(url)
+}
+
 func (c *Client) Get(url string) *ClientRespone {
 	return c.doing(http.MethodGet, url, nil, nil)
 }
 
-func (c *Client) Post(url string, headers http.Header, data string) *ClientRespone {
+func Post(url string, contentType string, headers http.Header, body io.Reader) *ClientRespone {
+	return DefaultClient.Post(url, contentType, headers, body)
+}
+
+func (c *Client) Post(url string, contentType string, headers http.Header, body io.Reader) *ClientRespone {
 	if headers == nil {
 		headers = http.Header{}
 	}
-	if len(headers.Get("Content-Type")) <= 0 {
-		headers.Set("Content-Type", "application/x-www-form-urlencoded")
-	}
-	return c.doing(http.MethodPost, url, headers, strings.NewReader(data))
+	headers.Set("Content-Type", contentType)
+	return c.doing(http.MethodPost, url, headers, body)
+}
+
+func PostForm(httpUrl string, headers http.Header, data url.Values) *ClientRespone {
+	return DefaultClient.PostForm(httpUrl, headers, data)
 }
 
 func (c *Client) PostForm(httpUrl string, headers http.Header, data url.Values) *ClientRespone {
 	if data == nil {
 		data = url.Values{}
 	}
-	return c.Post(httpUrl, headers, data.Encode())
+	return c.Post(httpUrl, "application/x-www-form-urlencoded", headers, strings.NewReader(data.Encode()))
+}
+
+func PostJsonBytes(httpUrl string, headers http.Header, jsonBytes []byte) *ClientRespone {
+	return DefaultClient.PostJsonBytes(httpUrl, headers, jsonBytes)
+}
+
+func (c *Client) PostJsonBytes(httpUrl string, headers http.Header, jsonBytes []byte) *ClientRespone {
+	return c.Post(httpUrl, "application/json", headers, bytes.NewReader(jsonBytes))
+}
+
+func PostJsonOBJ(httpUrl string, headers http.Header, jsonObj any) *ClientRespone {
+	return DefaultClient.PostJsonOBJ(httpUrl, headers, jsonObj)
+}
+
+func (c *Client) PostJsonOBJ(httpUrl string, headers http.Header, jsonObj any) *ClientRespone {
+	b, err := json.Marshal(jsonObj)
+	if err != nil {
+		return &ClientRespone{[]byte{}, nil, err}
+	}
+	return c.Post(httpUrl, "application/json", headers, bytes.NewReader(b))
+}
+
+func (c *Client) PostBodyString(httpUrl string, headers http.Header, data string) *ClientRespone {
+	return c.Post(httpUrl, "application/x-www-form-urlencoded", headers, strings.NewReader(data))
+}
+
+func (c *Client) PostBodyBytes(httpUrl string, headers http.Header, data []byte) *ClientRespone {
+	return c.Post(httpUrl, "application/x-www-form-urlencoded", headers, bytes.NewReader(data))
 }
